@@ -12,11 +12,13 @@ const users = [];
 function checksExistsUserAccount(request, response, next) {
   const { username } = request.headers;
 
-  const check = users.some(user => user.username === username );
+  const user = users.find(user => user.username === username );
 
-  if(!check){
+  if(!user){
     return response.status(400).send({error: "Usuário não encontrado."})
   }
+
+  request.user = user;
   
   return next()
 }
@@ -30,6 +32,7 @@ app.post('/users', (request, response) => {
   if(verifyIfUsernameExist){
     return response.status(400).send({error: "Usuário já existe"});
   }
+
   const newUser = {
     id: uuidv4(), 
     name,
@@ -39,11 +42,13 @@ app.post('/users', (request, response) => {
 
   users.push(newUser);
 
-  return response.send();
+  return response.send(newUser);
 });
 
 app.get('/todos', checksExistsUserAccount, (request, response) => {
-  // Complete aqui
+  const { user } = request;
+
+  return response.send(user.todos)
 });
 
 app.post('/todos', checksExistsUserAccount, (request, response) => {
