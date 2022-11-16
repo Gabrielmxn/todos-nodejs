@@ -15,7 +15,7 @@ function checksExistsUserAccount(request, response, next) {
   const user = users.find(user => user.username === username );
 
   if(!user){
-    return response.status(400).send({error: "Usuário não encontrado."})
+    return response.status(404).send({error: "Usuário não encontrado."})
   }
 
   request.user = user;
@@ -42,7 +42,7 @@ app.post('/users', (request, response) => {
 
   users.push(newUser);
 
-  return response.send(newUser);
+  return response.status(201).json(newUser);
 });
 
 app.get('/todos', checksExistsUserAccount, (request, response) => {
@@ -66,7 +66,7 @@ app.post('/todos', checksExistsUserAccount, (request, response) => {
 
   user.todos.push(todo);
 
-  return response.send(todo)
+  return response.status(201).send(todo)
 });
 
 app.put('/todos/:id', checksExistsUserAccount, (request, response) => {
@@ -75,19 +75,28 @@ app.put('/todos/:id', checksExistsUserAccount, (request, response) => {
 
   const { user } = request;
 
-  console.log(id);
+  const verifyTodo = user.todos.some(todo => todo.id === id)
 
+  if (!verifyTodo){
+    return response.status(404).send({ error: "Não existe"});
+  }
   const findTodoOfId = user.todos.find(todo => todo.id === id);
 
-  console.log(findTodoOfId);
   findTodoOfId.title = title;
-  findTodoOfId.deadline = deadline;
+  findTodoOfId.deadline = new Date(deadline);
+  
   return response.send(user)
 });
 
 app.patch('/todos/:id/done', checksExistsUserAccount, (request, response) => {
   const { id } = request.params;
   const { user } = request;
+
+  const verifyTodo = user.todos.some(todo => todo.id === id)
+
+  if (!verifyTodo){
+    return response.status(404).send({ error: "Não existe"});
+  }
 
   const findTodoOfId = user.todos.find(todo => todo.id === id);
 
@@ -98,7 +107,23 @@ app.patch('/todos/:id/done', checksExistsUserAccount, (request, response) => {
 });
 
 app.delete('/todos/:id', checksExistsUserAccount, (request, response) => {
-  // Complete aqui
+  const { id } = request.params;
+  const { user } = request;
+
+
+  const verifyTodo = user.todos.some(todo => todo.id === id)
+
+  if (!verifyTodo){
+    return response.status(404).send({ error: "Não existe"});
+  }
+
+  const deleteTodoIfId = user.todos.filter(todo => todo.id !== id);
+
+  user.todos = [...deleteTodoIfId];
+
+  return response.status(204);
+
+
 });
 
 module.exports = app;
