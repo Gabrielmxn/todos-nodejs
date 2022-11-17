@@ -80,12 +80,19 @@ app.put('/todos/:id', checksExistsUserAccount, (request, response) => {
   if (!verifyTodo){
     return response.status(404).send({ error: "Não existe"});
   }
-  const findTodoOfId = user.todos.find(todo => todo.id === id);
+  let findTodoOfId = user.todos.find(todo => todo.id === id);
+  let backupTodo = user.todos.filter(todo => todo.id !== id);
 
-  findTodoOfId.title = title;
-  findTodoOfId.deadline = new Date(deadline);
   
-  return response.send(user)
+  findTodoOfId = {
+    ...findTodoOfId,
+    title,
+    deadline: new Date(deadline),
+  }
+
+ user.todos = [...backupTodo, findTodoOfId]
+
+  return response.send(findTodoOfId)
 });
 
 app.patch('/todos/:id/done', checksExistsUserAccount, (request, response) => {
@@ -121,7 +128,7 @@ app.delete('/todos/:id', checksExistsUserAccount, (request, response) => {
 
   user.todos = [...deleteTodoIfId];
 
-  return response.status(204);
+  return response.status(204).send();
 
 
 });
